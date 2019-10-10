@@ -1,0 +1,62 @@
+Q1.: There are two types of applications A and B.
+Application A updates data to MongoDB server arbitrarily (Random transactions at random time)
+Application B needs to be able to get these updates from Device A in real-time
+
+Applications A and B cannot talk to each other. There are n number of these types of applications
+
+How will you update data on device B in real-time?
+Architect the solution.(Pseudo code does, with an in-depth explanation)
+
+
+
+Sol 1:
+Approach 1:
+We can update the data on device B in real-time using a data streaming service(message broker). The message broker will
+be responsible for sending the data from device A to device B.
+A message broker consists of three main components: a producer(device A who is producing the messages),
+a broker(middleware which sends the data), and a consumer(device B who consumes the data).
+
+Kafka consumer:
+>>> from kafka import KafkaConsumer
+>>> consumer = KafkaConsumer('my_favorite_topic', group_id='my_favorite_group')
+>>> for msg in consumer:
+...     print (msg)
+
+Kafka producer:
+>>> from kafka import KafkaProducer
+>>> producer = KafkaProducer(bootstrap_servers='localhost:1234')
+>>> for _ in range(100):
+...     producer.send('foobar', b'some_message_bytes')
+
+Approach 2:
+We can also use a TCP based notifier service to send the data. Device A will send the data to the notifier service
+and the notifier will send the data again to the other connected clients(This can be used to broadcast as well as to
+send to particular clients). Please check notifier.py script.
+
+
+Q2.: 2: You have a collection in MongoDB with the following fields
+
+timestamp: longint
+orderID: string
+amount: float
+
+Write an aggregation pipeline in MongoDB which will -
+1) Generate the data of how many orders were created in a day for last 7 days
+2) Generate the total amount collected per day for last 7 days
+
+
+Sol 2:
+1. db.order.aggredate([_id: { timestamp: {"$gte": new Date(ISODate().getTime() - 24*60*60*7)}, "$lte": new Date(ISODate().getTime())},count: { $sum: 1 }])
+
+2. db.order.aggregate(
+   [
+     {
+       $group:
+         {
+           _id: { timestamp: {"$gte": new Date(ISODate().getTime() - 24*60*60*7)}, "$lte": new Date(ISODate().getTime())},
+           totalAmount: { $sum: "$amount" },
+           count: { $sum: 1 }
+         }
+     }
+   ]
+)
